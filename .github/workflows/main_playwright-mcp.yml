@@ -1,0 +1,51 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy container app to Azure Web App - playwright-mcp
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: 'ubuntu-latest'
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to registry
+      uses: docker/login-action@v2
+      with:
+        registry: https://andromedahub.azurecr.io/
+        username: ${{ secrets.AzureAppService_ContainerUsername_81300a1f5882464ab2ddc5fae4db2464 }}
+        password: ${{ secrets.AzureAppService_ContainerPassword_d13486a5d26b4f8fa8fe069d80c71181 }}
+
+    - name: Build and push container image to registry
+      uses: docker/build-push-action@v3
+      with:
+        push: true
+        tags: andromedahub.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_81300a1f5882464ab2ddc5fae4db2464 }}/amiba/playwright:${{ github.sha }}
+        file: ./Dockerfile
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+    - name: Deploy to Azure Web App
+      id: deploy-to-webapp
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'playwright-mcp'
+        slot-name: 'production'
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_710ae2b831be41a5bef05d495d95cb2d }}
+        images: 'andromedahub.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_81300a1f5882464ab2ddc5fae4db2464 }}/amiba/playwright:${{ github.sha }}'
