@@ -19,4 +19,4 @@ COPY . .
 RUN npm run build
 
 # Run in headless and only with chromium (other browsers need more dependencies not included in this image)
-ENTRYPOINT ["node", "cli.js", "--headless", "--browser", "chromium"]
+ENTRYPOINT ["node", "cli.js", "--headless", "--browser", "chromium", "--port", "80", "--host", "0.0.0.0"]
